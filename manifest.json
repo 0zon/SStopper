@@ -1,0 +1,28 @@
+{
+  "name": "SimpleStopper",
+  "version": "0.1.0",
+  "description": "Stop scripts, other content from social networks and search engines from tracking your browsing and search history.",
+  "browser_action": {
+    "default_icon": "icons/icon-19.png",
+    "default_popup": "popup.html",
+    "default_title": "Simple stopper"
+  },
+  "permissions": [ "tabs",  "http://*/*",  "https://*/*" ],
+  "background_page": "background.html",
+  "icons": {
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+  "content_scripts": [
+    {
+      "all_frames": true,
+      "matches": [ "http://*/*", "https://*/*" ],
+      "exclude_globs": [ "*addthis.com*", "*digg.com*", "*facebook.com*", "*google.com*", "*klout.com*", "*linkedin.com*", "*meebo.com*", "*reddit.com*", "*sharethis.com*", "*stumbleupon.com*", "*tumblr.com*", "*twitter.com*", "*wibiya.com*", "*vk.com*", "*vkontakte.ru*", "*ya.ru*", "*yandex.*", "*mail.ru*", "*rambler.ru*", "*odnoklassniki.ru*" ],
+      "js": [
+        "content.js"
+      ],
+      "run_at" : "document_start"
+    }
+  ]
+}

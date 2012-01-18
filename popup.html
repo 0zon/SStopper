@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>popup</title>
+		<style type="text/css">
+			button {
+				width: 100px;
+				padding: 0px;
+				font-size: 10px;
+			}
+		</style>
+		<script src="jquery-min.js"></script>
+		<script>
+			$(document).ready(function(){
+				if (localStorage['enabled'] == 1) {
+					$("#as-enable").hide();
+					$("#as-disable").show();
+				} else {
+					$("#as-disable").hide();
+					$("#as-enable").show();
+				}
+				
+				$("#as-enable").mouseup(function(){
+					localStorage['enabled']=1;
+					chrome.extension.sendRequest({do: "updateIcon"});
+					setTimeout(function(){
+						window.close();
+					}, 100);
+				});
+				
+				$("#as-disable").mouseup(function(){
+					localStorage['enabled']=0;
+					chrome.extension.sendRequest({do: "updateIcon"});
+					setTimeout(function(){
+						window.close();
+					}, 100);
+				});
+   			});
+		</script>
+	</head>
+	<body>
+		<button id="as-enable">Enable</button>
+		<button id="as-disable">Disable</button>
+	</body>
+</html>

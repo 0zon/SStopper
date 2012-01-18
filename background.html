@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>background</title>
+		<script>
+			if (localStorage['enabled'] == null) {
+				localStorage['enabled'] = 1;
+			}
+			if (localStorage['enabled'] != 1)
+				chrome.browserAction.setIcon({
+					"path" : "icons/icon-19-dis.png"
+				});
+			chrome.extension.onRequest.addListener(
+			    function(request, sender, sendResponse) {
+			        if (request.do == "getState") {
+			            sendResponse({result: localStorage['enabled']/*Settings.enabled*/});
+			        } else if (request.do == "updateIcon") {
+			            if (localStorage['enabled'] != 1)
+						chrome.browserAction.setIcon({
+							"path" : "icons/icon-19-dis.png"
+						});
+						else
+						chrome.browserAction.setIcon({
+							"path" : "icons/icon-19.png"
+						});
+						sendResponse({result: true});
+			        } else {
+			            sendResponse({});
+			        }
+			    }
+			);
+		</script>
+	</head>
+	<body>
+	</body>
+</html>
