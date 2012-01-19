@@ -1,36 +1,117 @@
 <!DOCTYPE html>
 <html lang="en">
-	<head>
-		<title>background</title>
-		<script>
-			if (localStorage['enabled'] == null) {
-				localStorage['enabled'] = 1;
-			}
-			if (localStorage['enabled'] != 1)
-				chrome.browserAction.setIcon({
-					"path" : "icons/icon-19-dis.png"
-				});
-			chrome.extension.onRequest.addListener(
-			    function(request, sender, sendResponse) {
-			        if (request.do == "getState") {
-			            sendResponse({result: localStorage['enabled']/*Settings.enabled*/});
-			        } else if (request.do == "updateIcon") {
-			            if (localStorage['enabled'] != 1)
-						chrome.browserAction.setIcon({
-							"path" : "icons/icon-19-dis.png"
-						});
-						else
-						chrome.browserAction.setIcon({
-							"path" : "icons/icon-19.png"
-						});
-						sendResponse({result: true});
-			        } else {
-			            sendResponse({});
-			        }
-			    }
-			);
-		</script>
-	</head>
-	<body>
-	</body>
+<head>
+<title>background</title>
+<script type="text/javascript" src="utils.js"></script>
+<script>
+var whiteList;
+
+// Update icon
+function refreshIcon(tabId, url, flag) {
+	if (url.indexOf('chrome://') == 0 || url.indexOf('chrome-extension://') == 0)
+		return;
+	chrome.pageAction.setIcon({
+		'tabId': tabId, 
+		path : "icons/icon-19" + (getValue('enabled') == 1 ? (isWhiteDomain(extractDomainFromURL(url)) ? "-wl" : "") : "-dis") + ".png"
+	});
+	chrome.pageAction.show(tabId);
+	if (flag === undefined) {
+		chrome.windows.getAll({populate: true}, function(windows)
+		{
+			for (var i = 0; i < windows.length; i++)
+				for (var j = 0; j < windows[i].tabs.length; j++)
+					refreshIcon(windows[i].tabs[j].id, windows[i].tabs[j].url,false);
+		});
+	}
+}
+
+// Checking domain in joining the white list
+function isWhiteDomain(domain)
+{
+	for (var i = 0; i < whiteList.length; i++) {
+		var r = new RegExp(whiteList[i], "i");
+		if (r.test(domain))
+			return true;
+	}
+	return false;
+}
+
+// Delete domain from white list
+function addWhiteDomain(domain)
+{
+	whiteList.push(domain);
+	setValue('whiteList', JSON.stringify(whiteList));
+}
+
+// Adding domain from white list
+function delWhiteDomain(domain)
+{
+	whiteList.splice(whiteList.indexOf(domain), 1);
+	setValue('whiteList', JSON.stringify(whiteList));
+}
+
+// Return plugin state and domain belong to whitelist
+function getState(domain)
+{
+	return {enabled: (getValue('enabled') == 1), isWhite: isWhiteDomain(domain)};
+}
+
+// Set default value
+getValue('enabled', 1, true);
+jValue = getValue('whiteList', null);
+if (typeof(jValue) != "string" || !jValue.length) {
+	whiteList = '\
+addthis.com\n\
+digg.com\n\
+facebook.com\n\
+google.com\n\
+klout.com\n\
+linkedin.com\n\
+meebo.com\n\
+reddit.com\n\
+sharethis.com\n\
+stumbleupon.com\n\
+tumblr.com\n\
+twitter.com\n\
+wibiya.com\n\
+vk.com\n\
+vkontakte.ru\n\
+ya.ru\n\
+yandex.ru\n\
+mail.ru\n\
+rambler.ru\n\
+odnoklassniki.ru\
+'.split('\n');
+	setValue('whiteList', JSON.stringify(whiteList));
+} else {
+	whiteList = JSON.parse(jValue);
+	jValue = null;
+}
+
+chrome.extension.onRequest.addListener(function(request, sender, sendResponse) {
+	if (request.do == "getState") {
+		sendResponse(getState(request.domain));
+	} else {
+		sendResponse({});
+	}
+});
+
+// Update icon if a tab changes location
+chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab)
+{
+	if(changeInfo.status == "loading")
+		refreshIcon(tabId, tab.url);
+});
+
+// Show icon as page action for all tabs that already exist
+chrome.windows.getAll({populate: true}, function(windows)
+{
+	for (var i = 0; i < windows.length; i++)
+		for (var j = 0; j < windows[i].tabs.length; j++)
+			refreshIcon(windows[i].tabs[j].id, windows[i].tabs[j].url);
+});
+</script>
+</head>
+<body>
+</body>
 </html>

@@ -1,45 +1,82 @@
 <!DOCTYPE html>
 <html lang="en">
-	<head>
-		<title>popup</title>
-		<style type="text/css">
-			button {
-				width: 100px;
-				padding: 0px;
-				font-size: 10px;
+<head>
+<title>popup</title>
+<style type="text/css">
+a {
+	font-size: 10px;
+}
+button {
+	width: 100px;
+	padding: 0px;
+	font-size: 10px;
+}
+</style>
+<script src="jquery-min.js"></script>
+<script src="utils.js"></script>
+<script>
+var tab = null;
+var bp = chrome.extension.getBackgroundPage();
+
+function setEnabled(e) {
+	setValue('enabled', (getEventId(e) == "ext-enable" ? 1 : 0));
+	bp.refreshIcon(tab.id, tab.url);
+	window.close();
+}
+
+function updateWhiteList(e) {
+	if (getEventId(e) == 'wl-add') {
+		bp.addWhiteDomain(extractDomainFromURL(tab.url));
+	} else {
+		bp.delWhiteDomain(extractDomainFromURL(tab.url));
+	}
+	bp.refreshIcon(tab.id, tab.url);
+	window.close();
+}
+
+$(document).ready(function() {
+	chrome.windows.getCurrent(function(w) { 
+		chrome.tabs.getSelected(w.id, function(t) {
+			tab = t;
+			response = bp.getState(extractDomainFromURL(tab.url));
+			if (response.enabled == 1) {
+				$("#ext-enable").hide();
+				$("#ext-disable").show();
+			} else {
+				$("#ext-disable").hide();
+				$("#ext-enable").show();
 			}
-		</style>
-		<script src="jquery-min.js"></script>
-		<script>
-			$(document).ready(function(){
-				if (localStorage['enabled'] == 1) {
-					$("#as-enable").hide();
-					$("#as-disable").show();
-				} else {
-					$("#as-disable").hide();
-					$("#as-enable").show();
-				}
-				
-				$("#as-enable").mouseup(function(){
-					localStorage['enabled']=1;
-					chrome.extension.sendRequest({do: "updateIcon"});
-					setTimeout(function(){
-						window.close();
-					}, 100);
-				});
-				
-				$("#as-disable").mouseup(function(){
-					localStorage['enabled']=0;
-					chrome.extension.sendRequest({do: "updateIcon"});
-					setTimeout(function(){
-						window.close();
-					}, 100);
-				});
-   			});
-		</script>
-	</head>
-	<body>
-		<button id="as-enable">Enable</button>
-		<button id="as-disable">Disable</button>
-	</body>
+			if (response.isWhite) {
+				$("#wl-add").hide();
+				$("#wl-del").show();
+			} else {
+				$("#wl-del").hide();
+				$("#wl-add").show();
+			}
+		});
+	});
+	$("#ext-enable").mouseup(function(e) {
+		setEnabled(e);
+	});
+
+	$("#ext-disable").mouseup(function(e) {
+		setEnabled(e);
+	});
+
+	$("#wl-add").click(function(e) {
+		updateWhiteList(e);
+	});
+
+	$("#wl-del").click(function(e) {
+		updateWhiteList(e);
+	});
+});
+</script>
+</head>
+<body>
+	<button id="ext-enable">Enable</button>
+	<button id="ext-disable">Disable</button>
+	<a href="#" id="wl-add">Add to white list</a>
+	<a href="#" id="wl-del">Remove from white list</a>
+</body>
 </html>

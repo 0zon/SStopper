@@ -1,6 +1,6 @@
 (function() {
-	chrome.extension.sendRequest({do: "getState"}, function(response) {
-	    if (response.result == 1) {
+	chrome.extension.sendRequest({do: "getState", domain: window.top.document.location.hostname}, function(response) {
+		if (response.enabled == 1 && !response.isWhite) {
 			document.addEventListener("beforeload", function(event) {
 				var blocklist = [
 					"apis.google.com",
@@ -44,17 +44,47 @@
 					"feeds.feedburner.com",
 					"counter.yadro.ru",
 					"favicon.yandex.net",
-					"top100-images.rambler.ru"
+					"top100-images.rambler.ru",
+					"r.i.ua",
+					"metrika.yandex.ru",
+					"mc.yandex.ru",
+					"ua.hit.gemius.pl",
+					"i.bigmir.net"
 				]
 
 				var re = /(?:https?:)?\/\/([^\/]+)/i;
 				var result = re.exec(event.url);
 				if (result && (result.length > 1) && (blocklist.indexOf(result[1]) > -1)) {
 					event.preventDefault();
+					//console.log("blocked - " + event.url);
 				}
 			}, true);
 		};
 	});
 }());
-//http://code.google.com/chrome/extensions/samples.html#
-//http://habrahabr.ru/blogs/google_chrome/75639/
+
+window.addEventListener('DOMContentLoaded'/*'load'*/, function(e) {
+	chrome.extension.sendRequest({do: "getState", domain: window.top.document.location.hostname}, function(response) {
+		if (response.enabled == 1 && !response.isWhite) {
+			var doc = document;
+			var style = doc.createElement('style');
+			style.setAttribute('type', 'text/css');
+			style.appendChild(doc.createTextNode('.soc_buttons,\
+			[class*="odkl-klass"],\
+			[class*="vkontakte"],\
+			[class*="twitter"],\
+			[class*="facebook"],\
+			[class*="share"],\
+			[class*="social"],\
+			[name*="share"],\
+			[name*="social"],\
+			[src*="share"],\
+			[src*="social"],\
+			[id*="share"],\
+			[id*="social"] {\
+				display: none;\
+			}'));
+			doc.getElementsByTagName('head')[0].appendChild(style);
+		};
+	});
+}, false);
